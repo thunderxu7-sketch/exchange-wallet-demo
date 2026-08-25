@@ -7,7 +7,9 @@ import {
   useEffect,
   useMemo,
   useState,
+  useTransition,
 } from "react";
+import { useRouter } from "next/navigation";
 
 import styles from "./exchange-dashboard.module.css";
 import {
@@ -20,6 +22,7 @@ import {
   type ExchangeTransaction,
   type Network,
   type Rail,
+  type ServerRouteSnapshot,
   type TransactionStatus,
 } from "@/lib/exchange/types";
 
@@ -66,6 +69,7 @@ function Icon({
     | "lock"
     | "mail"
     | "phone"
+    | "refresh"
     | "shield"
     | "spark"
     | "wallet";
@@ -129,6 +133,13 @@ function Icon({
       <>
         <rect x="6" y="2" width="12" height="20" rx="2" />
         <path d="M10 5h4M11.5 18h1" />
+      </>
+    ),
+    refresh: (
+      <>
+        <path d="M20 6v5h-5" />
+        <path d="M4 18v-5h5" />
+        <path d="M6.1 9a7 7 0 0 1 11.6-2.6L20 11M4 13l2.3 4.6A7 7 0 0 0 17.9 15" />
       </>
     ),
     shield: (
@@ -197,6 +208,16 @@ function formatTime(value: string) {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
+  }).format(new Date(value));
+}
+
+function formatRefreshTime(value: string) {
+  return new Intl.DateTimeFormat("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Shanghai",
   }).format(new Date(value));
 }
 
@@ -274,7 +295,13 @@ function VerificationField({
   );
 }
 
-export default function ExchangeDashboard() {
+export default function ExchangeDashboard({
+  serverSnapshot,
+}: {
+  serverSnapshot: ServerRouteSnapshot;
+}) {
+  const router = useRouter();
+  const [isRouterRefreshing, startRouterRefresh] = useTransition();
   const [operation, setOperation] = useState<Operation>("deposit");
   const [rail, setRail] = useState<Rail>("internal");
   const [asset, setAsset] = useState<Asset>("USDT");
@@ -283,6 +310,13 @@ export default function ExchangeDashboard() {
   const [streamState, setStreamState] =
     useState<StreamState>("connecting");
   const [submitting, setSubmitting] = useState(false);
+  const [isPartialRefreshing, setIsPartialRefreshing] = useState(false);
+  const [partialRefreshedAt, setPartialRefreshedAt] = useState<string | null>(
+    null,
+  );
+  const [partialRefreshError, setPartialRefreshError] = useState<string | null>(
+    null,
+  );
   const [notice, setNotice] = useState<Notice | null>(null);
   const [copied, setCopied] = useState(false);
   const [codes, setCodes] = useState({
@@ -428,6 +462,41 @@ export default function ExchangeDashboard() {
     }
   }
 
+  function refreshRoute() {
+    startRouterRefresh(() => {
+      router.refresh();
+    });
+  }
+
+  async function refreshPartialData() {
+    setIsPartialRefreshing(true);
+    setPartialRefreshError(null);
+
+    try {
+      const response = await fetch("/api/transactions", {
+        cache: "no-store",
+      });
+      const result = (await response.json()) as {
+        error?: string;
+        fetchedAt?: string;
+        transactions?: ExchangeTransaction[];
+      };
+
+      if (!response.ok || !result.fetchedAt || !result.transactions) {
+        throw new Error(result.error ?? "局部数据刷新失败。");
+      }
+
+      setTransactions(result.transactions);
+      setPartialRefreshedAt(result.fetchedAt);
+    } catch (error) {
+      setPartialRefreshError(
+        error instanceof Error ? error.message : "局部数据刷新失败。",
+      );
+    } finally {
+      setIsPartialRefreshing(false);
+    }
+  }
+
   return (
     <div className={styles.shell}>
       <header className={styles.topbar}>
@@ -495,6 +564,109 @@ export default function ExchangeDashboard() {
               <small>{BALANCES[balanceAsset].fiat}</small>
             </article>
           ))}
+        </section>
+
+        <section className={styles.refreshLab} aria-labelledby="refresh-lab-title">
+          <header className={styles.refreshLabHeader}>
+            <div>
+              <span className={styles.refreshLabIcon}>
+                <Icon name="refresh" size={17} />
+              </span>
+              <div>
+                <h2 id="refresh-lab-title">两种刷新流程</h2>
+                <p>Router 刷新重新请求 RSC；局部刷新只替换交易列表数据。</p>
+              </div>
+            </div>
+            <code>Next.js App Router</code>
+          </header>
+
+          <div className={styles.refreshGrid}>
+            <article
+              className={`${styles.refreshCard} ${styles.routeRefreshCard} ${isRouterRefreshing ? styles.refreshingCard : ""}`}
+            >
+              <div className={styles.refreshCardTop}>
+                <span className={styles.refreshNumber}>A</span>
+                <div>
+                  <small>ROUTER REFRESH</small>
+                  <h3>刷新服务端路由</h3>
+                </div>
+                <span className={styles.refreshScope}>RSC</span>
+              </div>
+              <div className={styles.refreshFlow} aria-label="Router 刷新流程">
+                <code>router.refresh()</code>
+                <span>→</span>
+                <code>Server Component</code>
+                <span>→</span>
+                <code>RSC merge</code>
+              </div>
+              <div className={styles.refreshResult}>
+                <div>
+                  <span>服务端快照</span>
+                  <strong key={serverSnapshot.renderId}>
+                    {formatRefreshTime(serverSnapshot.renderedAt)} · {serverSnapshot.transactionCount} 笔
+                  </strong>
+                  <small>
+                    render #{serverSnapshot.renderId} · 进行中 {serverSnapshot.activeCount} · 已完成 {serverSnapshot.completedCount}
+                  </small>
+                </div>
+                <button
+                  disabled={isRouterRefreshing}
+                  onClick={refreshRoute}
+                  type="button"
+                >
+                  {isRouterRefreshing ? <span className={styles.darkSpinner} /> : <Icon name="refresh" size={15} />}
+                  {isRouterRefreshing ? "Router 刷新中" : "执行 Router 刷新"}
+                </button>
+              </div>
+              <p className={styles.refreshNote}>
+                路由服务端重新渲染，但保留当前表单、滚动位置和 Client State。
+              </p>
+            </article>
+
+            <article
+              className={`${styles.refreshCard} ${styles.partialRefreshCard} ${isPartialRefreshing ? styles.refreshingCard : ""}`}
+            >
+              <div className={styles.refreshCardTop}>
+                <span className={styles.refreshNumber}>B</span>
+                <div>
+                  <small>PARTIAL DATA REFRESH</small>
+                  <h3>仅刷新交易列表</h3>
+                </div>
+                <span className={styles.refreshScope}>JSON</span>
+              </div>
+              <div className={styles.refreshFlow} aria-label="局部数据刷新流程">
+                <code>fetch()</code>
+                <span>→</span>
+                <code>/api/transactions</code>
+                <span>→</span>
+                <code>setState</code>
+              </div>
+              <div className={styles.refreshResult}>
+                <div>
+                  <span>客户端快照</span>
+                  <strong key={partialRefreshedAt ?? "initial"}>
+                    {partialRefreshedAt
+                      ? `${formatRefreshTime(partialRefreshedAt)} · ${transactions.length} 笔`
+                      : "等待手动刷新"}
+                  </strong>
+                  <small>
+                    {partialRefreshError ?? "影响范围：右侧实时资金动态"}
+                  </small>
+                </div>
+                <button
+                  disabled={isPartialRefreshing}
+                  onClick={refreshPartialData}
+                  type="button"
+                >
+                  {isPartialRefreshing ? <span className={styles.darkSpinner} /> : <Icon name="refresh" size={15} />}
+                  {isPartialRefreshing ? "局部刷新中" : "刷新局部数据"}
+                </button>
+              </div>
+              <p className={styles.refreshNote}>
+                不请求当前路由，不重新渲染 Server Component，仅替换列表 State。
+              </p>
+            </article>
+          </div>
         </section>
 
         <div className={styles.workspace} id="funding">

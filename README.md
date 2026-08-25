@@ -1,6 +1,6 @@
 # Vault·X 交易所充提 Demo
 
-一个最小但完整的 Next.js 交易所充值与提取演示项目。支持站内 UID 和链上两种资金通道，提取时校验手机、邮箱与 Google 验证器三项 Mock 验证码，并通过 Server-Sent Events 实时推送交易状态。
+一个最小但完整的 Next.js 交易所充值与提取演示项目。支持站内 UID 和链上两种资金通道，提取时校验手机、邮箱与 Google 验证器三项 Mock 验证码，通过 Server-Sent Events 实时推送交易状态，并对比展示 Router 刷新与局部数据刷新。
 
 > 此项目仅供演示。它使用内存数据、模拟地址和固定验证码，**不处理任何真实资产**。
 
@@ -17,6 +17,9 @@
   - 首次连接推送当前交易快照。
   - 交易创建和状态变更时立即推送。
   - 15 秒心跳、浏览器自动重连与 `retry: 3000` 重试提示。
+- **两种刷新范式**
+  - Router 刷新：`router.refresh()` 重新请求当前路由、渲染 Server Component 并合并 RSC payload。
+  - 局部刷新：`fetch("/api/transactions")` 获取 JSON 快照，仅替换交易列表 State。
 - **工程化**
   - TypeScript 严格模式、ESLint、Vitest 和 GitHub Actions CI。
   - 响应式交易所资金账户界面。
@@ -33,6 +36,32 @@ npm run dev
 ```
 
 打开 [http://localhost:3000](http://localhost:3000)。项目不需要环境变量或外部服务。
+
+## 刷新流程对比
+
+### Router 刷新
+
+```text
+点击「执行 Router 刷新」
+  → useTransition(() => router.refresh())
+  → GET 当前路由
+  → Server Component 重新渲染
+  → 新 RSC payload 合并到当前页面
+```
+
+`src/app/page.tsx` 调用 `connection()` 确保每次刷新都在请求时生成新的服务端快照。界面会更新 render ID、时间和交易统计，同时保留币种、表单输入、Client State 与滚动位置。
+
+### 局部数据刷新
+
+```text
+点击「刷新局部数据」
+  → fetch("/api/transactions", { cache: "no-store" })
+  → 返回交易 JSON 快照
+  → setTransactions()
+  → 仅右侧实时资金动态更新
+```
+
+该流程不请求当前页面，不重新渲染 Server Component，因此服务端 render ID 保持不变。SSE 仍会在两次手动刷新之间持续增量推送交易状态。
 
 ## Mock 验证码
 
@@ -114,11 +143,23 @@ source.onmessage = (message) => {
 | `transaction.created` | 新充值或提取申请 |
 | `transaction.updated` | 确认数、审核、处理或完成状态更新 |
 
+### 交易快照（局部刷新）
+
+```bash
+curl http://localhost:3000/api/transactions
+```
+
+返回 `fetchedAt` 和当前 `transactions` 数组，响应使用 `Cache-Control: no-store`。
+
 ## 架构
 
 ```mermaid
 flowchart LR
-  UI["Next.js Client UI"] -->|POST| API["Route Handlers"]
+  UI["Next.js Client UI"] -->|"router.refresh()"| PAGE["Server Component route"]
+  PAGE -->|"RSC payload"| UI
+  UI -->|"GET JSON snapshot"| SNAPSHOT["/api/transactions"]
+  SNAPSHOT -->|"setTransactions()"| UI
+  UI -->|POST| API["Route Handlers"]
   API --> VALIDATION["Request validation"]
   VALIDATION --> STORE["In-memory mock store"]
   STORE --> BUS["Event subscribers"]
@@ -132,11 +173,13 @@ src/
 │   ├── api/deposits/route.ts
 │   ├── api/withdrawals/route.ts
 │   ├── api/events/route.ts
+│   ├── api/transactions/route.ts
 │   └── page.tsx
 ├── components/
 │   └── exchange-dashboard.tsx
 └── lib/exchange/
     ├── store.ts
+    ├── store.test.ts
     ├── types.ts
     ├── validation.ts
     └── validation.test.ts

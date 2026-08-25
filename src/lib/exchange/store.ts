@@ -5,6 +5,7 @@ import {
   type DepositRequest,
   type ExchangeEvent,
   type ExchangeTransaction,
+  type ServerRouteSnapshot,
   type WithdrawalRequest,
 } from "./types";
 
@@ -233,6 +234,21 @@ export function listTransactions() {
   return [...store.transactions.values()]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map(copyTransaction);
+}
+
+export function createServerRouteSnapshot(): ServerRouteSnapshot {
+  const transactions = listTransactions();
+  const completedCount = transactions.filter(
+    (transaction) => transaction.status === "completed",
+  ).length;
+
+  return {
+    renderId: randomUUID().slice(0, 6).toUpperCase(),
+    renderedAt: new Date().toISOString(),
+    transactionCount: transactions.length,
+    activeCount: transactions.length - completedCount,
+    completedCount,
+  };
 }
 
 export function createSnapshotEvent(): ExchangeEvent {

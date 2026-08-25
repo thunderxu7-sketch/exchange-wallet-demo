@@ -302,6 +302,259 @@
   white-space: nowrap;
 }
 
+.refreshLab {
+  margin-bottom: 18px;
+  overflow: hidden;
+  border: 1px solid #dfe6f0;
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 32px rgba(23, 42, 77, 0.045);
+}
+
+.refreshLabHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 62px;
+  padding: 0 19px;
+  border-bottom: 1px solid #e7ebf2;
+  background: #fafbfd;
+}
+
+.refreshLabHeader > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.refreshLabIcon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  color: #386ed2;
+  background: #eaf1ff;
+}
+
+.refreshLabHeader h2 {
+  color: #1c2b48;
+  font-size: 12px;
+  font-weight: 690;
+}
+
+.refreshLabHeader p {
+  margin-top: 3px;
+  color: #909caf;
+  font-size: 8px;
+}
+
+.refreshLabHeader > code {
+  padding: 5px 8px;
+  border: 1px solid #dae3f2;
+  border-radius: 7px;
+  color: #667b9e;
+  background: #fff;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 7px;
+}
+
+.refreshGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 13px;
+}
+
+.refreshCard {
+  --refresh-accent: #3971dd;
+  position: relative;
+  min-width: 0;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid #dfe6f1;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #fff, #f8faff);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.partialRefreshCard {
+  --refresh-accent: #168b70;
+  background: linear-gradient(145deg, #fff, #f7fcfa);
+}
+
+.refreshingCard {
+  border-color: color-mix(in srgb, var(--refresh-accent) 48%, #dfe6f1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--refresh-accent) 8%, transparent);
+}
+
+.refreshCardTop {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 9px;
+  align-items: center;
+}
+
+.refreshNumber {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--refresh-accent);
+  background: color-mix(in srgb, var(--refresh-accent) 10%, #fff);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.refreshCardTop > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.refreshCardTop small {
+  color: var(--refresh-accent);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 6px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+}
+
+.refreshCardTop h3 {
+  margin-top: 2px;
+  color: #2a3b58;
+  font-size: 10px;
+  font-weight: 680;
+}
+
+.refreshScope {
+  padding: 4px 6px;
+  border: 1px solid color-mix(in srgb, var(--refresh-accent) 22%, #dfe6f1);
+  border-radius: 6px;
+  color: var(--refresh-accent);
+  background: #fff;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 6px;
+  font-weight: 720;
+  letter-spacing: 0.06em;
+}
+
+.refreshFlow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 12px 0 10px;
+  padding: 8px 9px;
+  overflow-x: auto;
+  border: 1px dashed #d9e1ed;
+  border-radius: 8px;
+  color: #9aa6b8;
+  background: rgba(247, 249, 253, 0.78);
+  scrollbar-width: none;
+}
+
+.refreshFlow::-webkit-scrollbar {
+  display: none;
+}
+
+.refreshFlow code {
+  color: #536581;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 6px;
+  font-weight: 620;
+  white-space: nowrap;
+}
+
+.refreshFlow span {
+  color: var(--refresh-accent);
+  font-size: 9px;
+}
+
+.refreshResult {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.refreshResult > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.refreshResult > div > span {
+  color: #9aa5b6;
+  font-size: 7px;
+}
+
+.refreshResult strong {
+  margin-top: 2px;
+  color: #2c3f61;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  font-weight: 680;
+  animation: refreshFlash 550ms ease-out;
+}
+
+.refreshResult small {
+  overflow: hidden;
+  max-width: 230px;
+  margin-top: 2px;
+  color: #929fb2;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 6px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.refreshResult > button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  min-width: 126px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--refresh-accent) 28%, #dfe6f1);
+  border-radius: 8px;
+  color: var(--refresh-accent);
+  background: #fff;
+  font-size: 8px;
+  font-weight: 680;
+  white-space: nowrap;
+}
+
+.refreshResult > button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--refresh-accent) 6%, #fff);
+}
+
+.refreshResult > button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.darkSpinner {
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+.refreshNote {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid #edf0f5;
+  color: #8794a9;
+  font-size: 7px;
+  line-height: 1.5;
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 1.58fr) minmax(330px, 0.92fr);
@@ -1271,6 +1524,18 @@
   }
 }
 
+@keyframes refreshFlash {
+  0% {
+    color: var(--refresh-accent);
+    opacity: 0.35;
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 1060px) {
   .workspace {
     grid-template-columns: minmax(0, 1fr);
@@ -1317,6 +1582,19 @@
   }
 
   .balanceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .refreshLabHeader {
+    align-items: flex-start;
+    padding: 13px 15px;
+  }
+
+  .refreshLabHeader > code {
+    display: none;
+  }
+
+  .refreshGrid {
     grid-template-columns: 1fr;
   }
 
@@ -1374,6 +1652,15 @@
     max-width: 91px;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .refreshResult {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .refreshResult > button {
+    width: 100%;
   }
 
   .disclaimer {

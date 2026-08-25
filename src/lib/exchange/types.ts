@@ -69,6 +69,14 @@ export interface ExchangeTransaction {
   updatedAt: string;
 }
 
+export interface ServerRouteSnapshot {
+  renderId: string;
+  renderedAt: string;
+  transactionCount: number;
+  activeCount: number;
+  completedCount: number;
+}
+
 export type ExchangeEvent =
   | {
       id: string;
